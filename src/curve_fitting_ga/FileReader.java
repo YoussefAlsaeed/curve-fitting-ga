@@ -31,15 +31,15 @@ public class FileReader {
         }
     }
 
-    public boolean readDataset(List<Point> points, int[] polynomialDegree) {
+    public int readDataset(List<Point> points) {
         if (!isOpen()) {
             System.err.println("Error: File is not open.");
-            return false;
+            return 0;  // Return a default value or handle the error accordingly
         }
 
         if (scanner.hasNextInt()) {
             int numPoints = scanner.nextInt();
-            polynomialDegree[0] = scanner.nextInt();
+            int polynomialDegree = scanner.nextInt();
             points.clear();
 
             for (int i = 0; i < numPoints; i++) {
@@ -50,17 +50,17 @@ public class FileReader {
                         points.add(new Point(x, y));
                     } else {
                         System.err.println("Error reading point data.");
-                        return false;
+                        return 0;  // Return a default value or handle the error accordingly
                     }
                 } else {
                     System.err.println("Error reading point data.");
-                    return false;
+                    return 0;  // Return a default value or handle the error accordingly
                 }
             }
-            return true;
+            return polynomialDegree;
         } else {
             System.err.println("Error reading the number of points and polynomial degree.");
-            return false;
+            return 0;  // Return a default value or handle the error accordingly
         }
     }
 
