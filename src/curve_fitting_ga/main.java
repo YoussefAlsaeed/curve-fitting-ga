@@ -5,7 +5,7 @@ import java.util.List;
 
 public class main {
 	public static void main(String[] args) {
-	    String filename = "input.txt";
+	    String filename = "curve_fitting_input.txt";
 	    FileReader fileReader = new FileReader(filename);
 
 	    try {
@@ -17,7 +17,6 @@ public class main {
 	            for (int i = 0; i < numDatasets; i++) {
 	                List<Point> points = new ArrayList<>();
 
-	                // Update the line to get the polynomial degree from the readDataset method
 	                int polynomialDegree = fileReader.readDataset(points);
 	                
                     for (int j = 0; j < points.size(); j++) {

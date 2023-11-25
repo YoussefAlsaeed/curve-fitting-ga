@@ -2,10 +2,8 @@ package curve_fitting_ga;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import curve_fitting_ga.Point;
 
 public class FileReader {
     private Scanner scanner;

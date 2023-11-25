@@ -1,82 +1,67 @@
 package curve_fitting_ga;
 import java.io.*;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class CurveFittingGA {
 	
-    private int degree;
+    private int polynomialDegree;
     private Point[] points;
-    private int n;
-    private int populationSize = 60;
-    private int iterations = 5;
-    private int eliteIndividuals = 2;
+    private int populationSize = 100;
+    private int generations = 100;
     private Chromosome[] population;
     private Chromosome[] parents;
-    private Chromosome[] offsprings;
-    private int elite_individuals =2;
-    private static int generation = 0;
-    private double upper = 10;
-    private double lower = -10;
-    private double Pc = 0.6;
-    private double Pm = 0.1;
+    private Chromosome[] children;
+    private int eliteCount =50;
+    private static int testcase = 0;
+    private double upperBound = 10;
+    private double lowerBound = -10;
+    private double Pc = 0.7;
+    private double Pm = 0.01;
     private int b = 1;
-    private Chromosome[] elites;    
+    private int nonElite = populationSize - eliteCount;
     
-    public CurveFittingGA(int degree, Point[] points) {
-        this.degree = degree;
+    public CurveFittingGA(int polynomialDegree, Point[] points) {
+    	this.testcase++;
+        this.polynomialDegree = polynomialDegree;
         this.points = points;
-        this.n = points.length;
         this.population = new Chromosome[populationSize];
-        this.parents = new Chromosome[populationSize - eliteIndividuals];
-        this.offsprings = new Chromosome[populationSize - eliteIndividuals];
-        this.elites = new Chromosome[eliteIndividuals];
-        Initialization();
-    }
-
-    public void Initialization()
-    {
+        this.parents = new Chromosome[nonElite];
+        this.children = new Chromosome[nonElite];
+        
         for (int i = 0; i < populationSize; i++)
         {
-            population[i] = new Chromosome(degree);
-            if (i >= elite_individuals)
+            population[i] = new Chromosome(polynomialDegree);
+            if (i >= eliteCount)
             {
-                parents[i - elite_individuals] = new Chromosome(degree);
-                offsprings[i - elite_individuals] = new Chromosome(degree);
+                parents[i - eliteCount] = new Chromosome(polynomialDegree);
+                children[i - eliteCount] = new Chromosome(polynomialDegree);
             }
 
-            for (int j = 0; j <= degree; j++)
+            for (int j = 0; j < polynomialDegree + 1; j++)
             {
                 population[i].coefficients[j] = (20 * Math.random()) - 10;
                 population[i].coefficients[j] = Math.round(100 * population[i].coefficients[j]) / 100.0;
             }
         }
-
-        for (int i = 0; i < elite_individuals; i++)
-        {
-            elites[i] = new Chromosome(degree);
+    }
+    
+    public void geneticAlgorithm() {
+        for (int i = 0; i < generations; i++) {
+            mseFitness();
+            sortPopulation(population);
+            tournamentSelection();
+            twoPointCrossover();
+            nonUniformMutation();
+            elitistReplacement();
         }
+        mseFitness();
+        sortPopulation(population);
+        writeToFile();
     }
 
-    public void Sort(Chromosome[] c) {
-
-        Chromosome temp = new Chromosome(degree);
-
-        for (int i = 0; i < populationSize - 1; i++) {
-
-            int min_idx = i;
-            for (int j = i + 1; j < populationSize; j++)
-                if (c[j].fitness < c[min_idx].fitness)
-                    min_idx = j;
-
-
-            temp.coefficients = c[min_idx].coefficients.clone();
-            temp.fitness = c[min_idx].fitness;
-
-            c[min_idx].coefficients = c[i].coefficients.clone();
-            c[min_idx].fitness = c[i].fitness;
-
-            c[i].coefficients = temp.coefficients.clone();
-            c[i].fitness = temp.fitness;
-        }
+    public void sortPopulation(Chromosome[] population) {
+        Arrays.sort(population, Comparator.comparingDouble(chromosome -> chromosome.fitness));
     }
 
     public void mseFitness()
@@ -85,167 +70,124 @@ public class CurveFittingGA {
 
         for (int i = 0; i < populationSize; i++)
         {
-            for (int j = 0; j < n; j++)
+            for (int j = 0; j < points.length; j++)
             {
-                double ycalc = 0.0;
+                double y = 0.0;
 
-                for (int k = 0; k <= degree; k++)
+                for (int l = 0; l < polynomialDegree + 1; l++)
                 {
-                    ycalc += population[i].coefficients[k] * (Math.pow(points[j].x,k));
+                    y += population[i].coefficients[l] * (Math.pow(points[j].x,l));
                 }
 
-                total += Math.pow((ycalc - points[j].y),2);
-                total = Math.round(100 * total) / 100.0;
+                total += Math.pow((y - points[j].y),2);
             }
-            population[i].fitness = total / n;
-            total = 0;
+            population[i].fitness = (total / points.length);
+            total = 0.0;
         }
 
-        Sort(population);
     }
 
-    public void Selection()
-    {
-        int selector;
-        int selector2;
+    public void tournamentSelection() {
+        for (int i = 0; i < populationSize - eliteCount; i++) {
+            int contender1 = eliteCount + (int) (Math.random() * (populationSize - eliteCount));
+            int contender2 = eliteCount + (int) (Math.random() * (populationSize - eliteCount));
 
-        for (int i = 0; i < populationSize - elite_individuals; i++)
-        {
-            selector = ((int) (Math.random() * (populationSize - elite_individuals))) + elite_individuals;
-            selector2 = ((int) (Math.random() * (populationSize - elite_individuals))) + elite_individuals;
-
-            if (population[selector].fitness < population[selector2].fitness)
-            {
-                parents[i].coefficients = population[selector].coefficients.clone();
+            int selectedContender;
+            if (population[contender1].fitness < population[contender2].fitness) {
+                selectedContender = contender1;
+            } else {
+                selectedContender = contender2;
             }
 
-            else
-            {
-                parents[i].coefficients = population[selector2].coefficients.clone();
+            parents[i].coefficients = Arrays.copyOf(population[selectedContender].coefficients, population[selectedContender].coefficients.length);
+        }
+    }
+    
+    public void nonUniformMutation() {
+        for (int i = 0; i < populationSize - eliteCount; i++) {
+            for (int j = 0; j <= polynomialDegree; j++) {
+                if (Math.random() <= Pm) {
+                    // Calculate the distance from the current value to the lower and upper bounds
+                    double distanceToLowerBound = children[i].coefficients[j] - lowerBound;
+                    double distanceToUpperBound = upperBound - children[i].coefficients[j];
+
+                    // Determine the direction of mutation (towards the lower or upper bound)
+                    boolean mutateTowardsLowerBound = Math.random() <= 0.5;
+                    double distanceToMutate;
+
+                    if (mutateTowardsLowerBound) {
+                        distanceToMutate = distanceToLowerBound;
+                    } else {
+                        distanceToMutate = distanceToUpperBound;
+                    }
+
+                    // Calculate the delta value using the non-uniform mutation formula
+                    double delta = distanceToMutate * (1 - Math.pow(Math.random(), 1 - Math.pow(((double) testcase / (double) generations), b)));
+                    delta = Math.round(100 * delta) / 100.0;
+
+                    // Apply the delta to the current value
+                    if (mutateTowardsLowerBound) {
+                        children[i].coefficients[j] -= delta;
+                    } else {
+                        children[i].coefficients[j] += delta;
+                    }
+                    children[i].coefficients[j] = Math.round(100 * children[i].coefficients[j]) / 100.0;
+                }
             }
         }
-
     }
 
     public void twoPointCrossover() {
-        int point1 = 0;
-        int point2 = 0;
-        int temp = 0;
+        for (int i = 0; i < populationSize - eliteCount; i += 2) {
+            double doCrossover = Math.random();
 
-        for (int i = 0; i < populationSize - elite_individuals; i += 2) {
-            double decision = Math.random();
+            if (doCrossover <= Pc) {
+                int point1 = (int) (Math.random() * (polynomialDegree + 1));
+                int point2 = (int) (Math.random() * (polynomialDegree + 1));
 
-            if (decision <= Pc) {
-                point1 = (int) (Math.random() * (degree + 1));
-                point2 = (int) (Math.random() * (degree + 1));
+                while (point1 == point2 || (point1 == 0 && point2 == polynomialDegree)) {
+                    point1 = (int) (Math.random() * (polynomialDegree + 1));
+                    point2 = (int) (Math.random() * (polynomialDegree + 1));
+                }
+
                 if (point1 > point2) {
-                    temp = point1;
+                    int temp = point1;
                     point1 = point2;
                     point2 = temp;
                 }
 
-                // Ensure points are not equal
-                while (point1 == point2 || (point1 == 0 && point2 == degree)) {
-                    point1 = (int) (Math.random() * (degree + 1));
-                    point2 = (int) (Math.random() * (degree + 1));
-
-                    if (point1 > point2) {
-                        temp = point1;
-                        point1 = point2;
-                        point2 = temp;
-                    }                    
-                }
-
                 // Perform two-point crossover
-                System.arraycopy(parents[i].coefficients, 0, offsprings[i].coefficients, 0, point1);
-                System.arraycopy(parents[i + 1].coefficients, 0, offsprings[i + 1].coefficients, 0, point1);
-
-                System.arraycopy(parents[i + 1].coefficients, point1, offsprings[i].coefficients, point1, point2 - point1);
-                System.arraycopy(parents[i].coefficients, point1, offsprings[i + 1].coefficients, point1, point2 - point1);
-
-                System.arraycopy(parents[i].coefficients, point2, offsprings[i].coefficients, point2, degree + 1 - point2);
-                System.arraycopy(parents[i + 1].coefficients, point2, offsprings[i + 1].coefficients, point2, degree + 1 - point2);
+                crossover(parents[i].coefficients, parents[i + 1].coefficients, children[i].coefficients, point1, point2);
+                crossover(parents[i + 1].coefficients, parents[i].coefficients, children[i + 1].coefficients, point1, point2);
             } else {
-                offsprings[i].coefficients = parents[i].coefficients.clone();
-                offsprings[i + 1].coefficients = parents[i + 1].coefficients.clone();
+                children[i].coefficients = Arrays.copyOf(parents[i].coefficients, parents[i].coefficients.length);
+                children[i + 1].coefficients = Arrays.copyOf(parents[i + 1].coefficients, parents[i + 1].coefficients.length);
             }
         }
     }
 
-    public void nonuniformMutation()
-    {
-        for (int i = 0; i < populationSize - elite_individuals; i++)
-        {
-            for (int j = 0; j <= degree; j++)
-            {
-                double decision = Math.random();
-                if (decision <= Pm)
-                {
-                    double Lx = offsprings[i].coefficients[j] - lower;
-                    double Ux = upper - offsprings[i].coefficients[j];
-                    double y;
-                    double delta;
-
-                    double decision2 = Math.random();
-
-                    if (decision2 <= 0.5)
-                        y = Lx;
-                    else
-                        y = Ux;
-
-                    double r = Math.random();
-                    delta = y * (1 - Math.pow(r,1 - Math.pow(((double)generation/(double)iterations),b)));
-                    delta = Math.round(100 * delta) / 100.0;
-
-                    if (y == Lx)
-                        offsprings[i].coefficients[j] -= delta;
-                    else
-                        offsprings[i].coefficients[j] += delta;
-                    offsprings[i].coefficients[j] = Math.round(100 * offsprings[i].coefficients[j]) / 100.0;
-                }
-            }
-        }
+    private void crossover(double[] parent1, double[] parent2, double[] offspring, int point1, int point2) {
+        System.arraycopy(parent1, 0, offspring, 0, point1);
+        System.arraycopy(parent2, point1, offspring, point1, point2 - point1);
+        System.arraycopy(parent1, point2, offspring, point2, parent1.length - point2);
     }
 
-    public void elitistReplacement()
-    {
-        for (int i = elite_individuals; i < populationSize; i++)
-        {
-            population[i].coefficients = offsprings[i - elite_individuals].coefficients.clone();
-        }
-
-        for (int i = 0; i < populationSize; i++)
-        {
-            population[i].fitness = 0;
+    public void elitistReplacement() {
+        for (int i = eliteCount; i < populationSize; i++) {
+            population[i].coefficients = children[i - eliteCount].coefficients.clone();
+            population[i].fitness = children[i - eliteCount].fitness;
         }
     }
 
     public void writeToFile() {
-        try {
-            FileWriter fw = new FileWriter("output.txt", true);
-            fw.write("In test case #" + generation + "\n");
-            for (int j = 0; j <= degree; j++) {
-                fw.write("a" + j + " = " + population[0].coefficients[j] + "\n");
+        try (PrintWriter writer = new PrintWriter(new FileWriter("results.txt", true))) {
+            writer.println("Dataset: " + testcase);
+            for (int i = 0; i <= polynomialDegree; i++) {
+                writer.println("Coefficient " + i + " = " + population[0].coefficients[i]);
             }
-            fw.write("MSE = " + population[0].fitness + "\n");
-            fw.close();
+            writer.println("MSE = " + population[0].fitness);
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-    
-    public void geneticAlgorithm() {
-        for (int j = 0; j < iterations; j++) {
-            generation++;
-            mseFitness();
-            Selection();
-            twoPointCrossover();
-            nonuniformMutation();
-            elitistReplacement();
-        }
-        mseFitness();
-        Sort(population);
-        writeToFile();
-        generation = 0;
     }
 }

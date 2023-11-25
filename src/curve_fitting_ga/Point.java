@@ -9,9 +9,7 @@ public class Point {
 		this.x = x;
 		this.y = y;
 	}
-	public Point() {
-		// TODO Auto-generated constructor stub
-	}
+
 	public double getX() {
 		return x;
 	}

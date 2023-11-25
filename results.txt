@@ -1,0 +1,43 @@
+Dataset: 1
+Coefficient 0 = -1.02
+Coefficient 1 = 0.9
+Coefficient 2 = -0.67
+Coefficient 3 = 0.13
+MSE = 12.31122492127176
+Dataset: 2
+Coefficient 0 = -1.49
+Coefficient 1 = -5.76
+Coefficient 2 = -4.21
+Coefficient 3 = 5.72
+Coefficient 4 = -4.49
+Coefficient 5 = 0.62
+MSE = 26740.04441467039
+Dataset: 3
+Coefficient 0 = -9.09
+Coefficient 1 = -6.94
+Coefficient 2 = -8.67
+Coefficient 3 = 3.12
+Coefficient 4 = -1.36
+Coefficient 5 = -2.15
+Coefficient 6 = 0.33
+MSE = 2067177.2897976197
+Dataset: 4
+Coefficient 0 = -4.61
+Coefficient 1 = -9.58
+Coefficient 2 = -9.72
+Coefficient 3 = 8.55
+Coefficient 4 = -1.05
+MSE = 4174.513073121066
+Dataset: 5
+Coefficient 0 = -8.13
+Coefficient 1 = 2.81
+Coefficient 2 = -5.95
+Coefficient 3 = 8.17
+Coefficient 4 = -9.64
+Coefficient 5 = -3.36
+Coefficient 6 = -6.78
+Coefficient 7 = -3.57
+Coefficient 8 = 3.57
+Coefficient 9 = -5.9
+Coefficient 10 = 0.95
+MSE = 2.295870852803755E12
